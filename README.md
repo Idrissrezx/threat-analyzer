@@ -19,7 +19,7 @@ A cybersecurity tool to analyze IPs and domains against real threat intelligence
 ## ⚙️ Setup
 
 ### 1. Clone the repo
-git clone https://github.com/Idrissxrez/threat-analyzer.git
+git clone https://github.com/Idrissrezx/threat-analyzer.git
 
 ### 2. Configure API keys
 Create a `backend/.env` file:
