@@ -2,7 +2,67 @@ import { useState } from "react";
 import { Search, Shield, ShieldAlert, ShieldCheck, Globe, Server, Tag, AlertTriangle } from "lucide-react";
 import logo from "./assets/logo.png";
 
-const BACKEND_URL = "https://threatanalyzer.infinityfreeapp.com/analyze.php";
+const VT_KEY = import.meta.env.VITE_055e9ec5ef930a18cb425aa890ec068b34dda29b073a9a5b0a16feec6c16dd24;
+const ABUSE_KEY = import.meta.env.VITE_5f79a74bf19d126cb1a16a389c017bf6e4ed4d5344d6ce30dd0be32e4272274169250eed9557abe1;
+
+async function analyze() {
+  if (!query.trim()) return;
+  setLoading(true);
+  setError(null);
+  setResult(null);
+  try {
+    const q = query.trim();
+    const isIP = /^(\d{1,3}\.){3}\d{1,3}$/.test(q);
+
+    // VirusTotal
+    const vtEndpoint = isIP
+      ? `https://www.virustotal.com/api/v3/ip_addresses/${q}`
+      : `https://www.virustotal.com/api/v3/domains/${q}`;
+
+    const vtRes = await fetch(vtEndpoint, {
+      headers: { "x-apikey": VT_KEY }
+    });
+    const vtData = await vtRes.json();
+    const stats = vtData?.data?.attributes?.last_analysis_stats ?? {};
+    const malicious = stats.malicious ?? 0;
+    const suspicious = stats.suspicious ?? 0;
+    const harmless = stats.harmless ?? 0;
+    const total = malicious + suspicious + harmless;
+    const score = total > 0 ? Math.round(((malicious + suspicious) / total) * 100) : 0;
+
+    // AbuseIPDB (only for IPs) — use a proxy to avoid CORS
+    let abuseScore = null, abuseReports = null, isp = null;
+    if (isIP) {
+      const abuseRes = await fetch(
+        `https://api.abuseipdb.com/api/v2/check?ipAddress=${q}&maxAgeInDays=90`,
+        { headers: { "Key": ABUSE_KEY, "Accept": "application/json" } }
+      );
+      const abuseData = await abuseRes.json();
+      abuseScore = abuseData?.data?.abuseConfidenceScore ?? null;
+      abuseReports = abuseData?.data?.totalReports ?? null;
+      isp = abuseData?.data?.isp ?? null;
+    }
+
+    setResult({
+      query: q,
+      type: isIP ? "IP Address" : "Domain",
+      score,
+      malicious,
+      suspicious,
+      harmless,
+      country: vtData?.data?.attributes?.country ?? "N/A",
+      owner: vtData?.data?.attributes?.as_owner ?? vtData?.data?.attributes?.registrar ?? "N/A",
+      categories: Object.values(vtData?.data?.attributes?.categories ?? {}),
+      abuse_score: abuseScore,
+      abuse_reports: abuseReports,
+      isp,
+    });
+  } catch (e) {
+    setError("Failed to fetch. Check your connection.");
+  } finally {
+    setLoading(false);
+  }
+}
 
 function ScoreRing({ score }) {
   const color = score >= 70 ? "#ef4444" : score >= 30 ? "#f97316" : "#22c55e";

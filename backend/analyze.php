@@ -3,6 +3,11 @@ header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 header("Access-Control-Allow-Methods: GET");
 
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 // Load .env file
 $env = parse_ini_file(__DIR__ . '/.env');
 $vtKey = $env['VIRUSTOTAL_API_KEY'];
