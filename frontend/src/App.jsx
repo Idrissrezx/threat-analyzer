@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Search, Shield, ShieldAlert, ShieldCheck, Globe, Server, Tag, AlertTriangle } from "lucide-react";
 import logo from "./assets/logo.png";
 
-const BACKEND_URL = "http://localhost/backend/analyze.php";
+const BACKEND_URL = "https://threatanalyzer.infinityfreeapp.com/analyze.php";
 
 function ScoreRing({ score }) {
   const color = score >= 70 ? "#ef4444" : score >= 30 ? "#f97316" : "#22c55e";
